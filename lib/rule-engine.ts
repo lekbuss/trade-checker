@@ -138,11 +138,11 @@ export function compareValues(
   if (ruleType === 'percentage') {
     const base = Math.max(Math.abs(numA), Math.abs(numB))
     if (base === 0) return false
-    return diff / base > ruleValue.threshold
+    return diff / base > (ruleValue.threshold ?? 0)
   }
 
   if (ruleType === 'absolute') {
-    return diff > ruleValue.threshold
+    return diff > (ruleValue.threshold ?? 0)
   }
 
   return String(a).trim() !== String(b).trim()
@@ -208,8 +208,9 @@ export async function runRuleEngine(
   // INVOICE × BL
   if (inv && bl) {
     check('supplier_name', inv.supplier_name, bl.shipper_name, 'INVOICE', 'BL')
-    check('total_gross_weight_kg', pl?.total_gross_weight_kg, bl.total_gross_weight_kg, 'INVOICE', 'BL')
-    check('total_volume_m3', pl?.total_volume_m3, bl.total_volume_m3, 'INVOICE', 'BL')
+    // PL vs BL for weight/volume (BL should match PL, not invoice)
+    check('total_gross_weight_kg', pl?.total_gross_weight_kg, bl.total_gross_weight_kg, 'PACKING_LIST', 'BL')
+    check('total_volume_m3', pl?.total_volume_m3, bl.total_volume_m3, 'PACKING_LIST', 'BL')
   }
 
   // INVOICE × ORIGIN_CERT
@@ -221,6 +222,7 @@ export async function runRuleEngine(
       check('country_of_origin', invItem.country_of_origin, ocItem.country_of_origin, 'INVOICE', 'ORIGIN_CERT')
       check('description', invItem.description, ocItem.description, 'INVOICE', 'ORIGIN_CERT')
     }
+    check('total_amount', inv.total_amount, oc.total_transaction_value, 'INVOICE', 'ORIGIN_CERT')
   }
 
   // BL × PACKING_LIST
