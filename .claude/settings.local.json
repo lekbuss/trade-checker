@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm list:*)",
+      "Bash(npx -y pnpm --version)",
+      "Bash(npm install:*)",
+      "Bash(pnpm --version)",
+      "Read(//c/Users/r00000835/AppData/Roaming/npm/**)",
+      "Bash(pnpm add:*)"
+    ]
+  }
+}
