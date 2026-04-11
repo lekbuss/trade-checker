@@ -208,9 +208,6 @@ export async function runRuleEngine(
   // INVOICE × BL
   if (inv && bl) {
     check('supplier_name', inv.supplier_name, bl.shipper_name, 'INVOICE', 'BL')
-    // PL vs BL for weight/volume (BL should match PL, not invoice)
-    check('total_gross_weight_kg', pl?.total_gross_weight_kg, bl.total_gross_weight_kg, 'PACKING_LIST', 'BL')
-    check('total_volume_m3', pl?.total_volume_m3, bl.total_volume_m3, 'PACKING_LIST', 'BL')
   }
 
   // INVOICE × ORIGIN_CERT

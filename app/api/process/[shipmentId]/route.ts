@@ -15,7 +15,11 @@ async function preprocessFile(
   filePath: string,
   fileType: string
 ): Promise<{ text: string; images: string[] }> {
-  const absPath = path.join(process.cwd(), filePath)
+  const uploadsRoot = path.resolve(process.cwd(), 'uploads')
+  const absPath = path.resolve(process.cwd(), filePath)
+  if (!absPath.startsWith(uploadsRoot + path.sep)) {
+    throw new Error(`Invalid file path: ${filePath}`)
+  }
   const bytes = await readFile(absPath)
   const blob = new Blob([bytes])
   const fd = new FormData()

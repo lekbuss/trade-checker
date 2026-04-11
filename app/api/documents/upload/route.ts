@@ -18,12 +18,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'file, shipmentId, docType are required' }, { status: 400 })
     }
 
+    const MAX_BYTES = 50 * 1024 * 1024 // 50 MB
+    if (file.size > MAX_BYTES) {
+      return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 })
+    }
+
     const ext = path.extname(file.name).toLowerCase()
     if (!ALLOWED_EXTENSIONS.has(ext)) {
       return NextResponse.json({ error: `Unsupported file type: ${ext}` }, { status: 400 })
     }
 
-    const uploadsDir = path.join(process.cwd(), 'uploads', shipmentId)
+    const uploadsRoot = path.resolve(process.cwd(), 'uploads')
+    const uploadsDir = path.resolve(uploadsRoot, shipmentId)
+    if (!uploadsDir.startsWith(uploadsRoot + path.sep) && uploadsDir !== uploadsRoot) {
+      return NextResponse.json({ error: 'Invalid shipmentId' }, { status: 400 })
+    }
     await mkdir(uploadsDir, { recursive: true })
     const filename = `${docType}${ext}`
     const filePath = path.join(uploadsDir, filename)
