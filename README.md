@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Trade Document Checker（貿易書類AI核対システム）
 
-## Getting Started
+## 概要
 
-First, run the development server:
+Invoice / Packing List / B/L / 原産地証明書の4種類の貿易書類をアップロードすると、
+Claude Vision APIが各書類からフィールドを抽出し、規則エンジンが差異を検出、
+LLMが修正指示を日本語で生成します。
+
+## 技術スタック
+
+- **フロントエンド/バックエンド**: Next.js 16 (App Router) + Tailwind CSS + shadcn/ui
+- **データベース**: PostgreSQL 16 + Prisma 7 ORM
+- **AI**: Anthropic Claude API (claude-sonnet-4-20250514)
+- **ファイル前処理**: Python 3.11 + FastAPI + pdfplumber + pdf2image + openpyxl
+- **インフラ**: Docker Compose
+
+## 環境構築
+
+### 前提条件
+
+- Docker Desktop インストール済み
+- Node.js 20+, pnpm インストール済み
+- Anthropic API キー取得済み
+
+### 手順
+
+1. `.env.local` を作成：
+   ```
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/trade_checker"
+   ANTHROPIC_API_KEY="your_api_key_here"
+   PYTHON_SERVICE_URL="http://localhost:8001"
+   NEXT_PUBLIC_APP_NAME="Trade Document Checker"
+   ```
+
+2. PostgreSQL を Docker で起動：
+   ```bash
+   docker compose up postgres -d
+   ```
+
+3. マイグレーションとシード：
+   ```bash
+   pnpm install
+   pnpm dlx prisma migrate deploy
+   pnpm dlx prisma db seed
+   ```
+
+4. 開発サーバーを起動：
+   ```bash
+   pnpm dev
+   ```
+
+5. ブラウザで `http://localhost:3000` を開く
+
+### Python サービス（ローカル）
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd python-service
+pip install -r requirements.txt
+uvicorn main:app --port 8001 --reload
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Docker Compose（全サービス）
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+docker compose up -d
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## テスト
 
-## Learn More
+```bash
+pnpm test
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 画面構成
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| URL | 説明 |
+|-----|------|
+| `/` | 書類アップロード・処理実行 |
+| `/shipments` | バッチ一覧 |
+| `/shipments/[id]` | バッチ詳細・差異レポート |
+| `/export` | JSON/CSVエクスポート |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## API エンドポイント
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Method | Path | 説明 |
+|--------|------|------|
+| GET | `/api/shipments` | バッチ一覧 |
+| POST | `/api/shipments` | バッチ作成 |
+| GET | `/api/shipments/[id]` | バッチ詳細 |
+| POST | `/api/documents/upload` | ファイルアップロード |
+| POST | `/api/process/[id]` | 処理実行 |
+| PATCH | `/api/shipments/[id]/discrepancies/[did]` | 差異ステータス更新 |
+| GET | `/api/export/[id]?format=json\|csv` | エクスポート |
