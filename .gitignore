@@ -40,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/lib/generated/prisma
+
+# docker / local dev
+uploads/
+__pycache__/
+*.pyc
+.venv/
+python-service/.venv/
+dist/
+*.egg-info/
