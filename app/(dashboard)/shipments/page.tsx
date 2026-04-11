@@ -16,9 +16,7 @@ export default async function ShipmentsPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">バッチ一覧</h1>
-        <Button asChild>
-          <Link href="/">新規作成</Link>
-        </Button>
+        <Button render={<Link href="/" />}>新規作成</Button>
       </div>
       <div className="bg-white rounded-lg shadow-sm border">
         <Table>
@@ -50,9 +48,7 @@ export default async function ShipmentsPage() {
                     {new Date(s.createdAt).toLocaleString('ja-JP')}
                   </TableCell>
                   <TableCell>
-                    <Button asChild variant="outline" size="sm">
-                      <Link href={`/shipments/${s.id}`}>詳細</Link>
-                    </Button>
+                    <Button render={<Link href={`/shipments/${s.id}`} />} variant="outline" size="sm">詳細</Button>
                   </TableCell>
                 </TableRow>
               )

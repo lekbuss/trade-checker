@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button'
 export function ExtractedJsonDialog({ docType, data }: { docType: string; data: unknown }) {
   return (
     <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">抽出結果を見る</Button>
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>
+        抽出結果を見る
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
         <DialogHeader>

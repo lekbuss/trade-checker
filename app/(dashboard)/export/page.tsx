@@ -34,7 +34,7 @@ export default function ExportPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>バッチ</Label>
-            <Select onValueChange={setSelectedId} value={selectedId}>
+            <Select onValueChange={(v) => setSelectedId(v ?? '')} value={selectedId}>
               <SelectTrigger>
                 <SelectValue placeholder="バッチを選択してください" />
               </SelectTrigger>
@@ -55,10 +55,8 @@ export default function ExportPage() {
             </Button>
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button disabled variant="secondary">NASSC 連携</Button>
-                  </span>
+                <TooltipTrigger render={<span />}>
+                  <Button disabled variant="secondary">NASSC 連携</Button>
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>接口対接中（実装予定）</p>
