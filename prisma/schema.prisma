@@ -14,6 +14,8 @@ model Shipment {
   updatedAt     DateTime       @updatedAt
   documents     Document[]
   discrepancies Discrepancy[]
+
+  @@index([status])
 }
 
 enum ShipmentStatus {
@@ -26,7 +28,7 @@ enum ShipmentStatus {
 model Document {
   id              String    @id @default(cuid())
   shipmentId      String
-  shipment        Shipment  @relation(fields: [shipmentId], references: [id])
+  shipment        Shipment  @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
   docType         DocType
   fileType        FileType
   filePath        String
@@ -62,7 +64,7 @@ enum DocStatus {
 model Discrepancy {
   id             String            @id @default(cuid())
   shipmentId     String
-  shipment       Shipment          @relation(fields: [shipmentId], references: [id])
+  shipment       Shipment          @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
   fieldName      String
   docA           DocType
   docB           DocType
@@ -72,6 +74,8 @@ model Discrepancy {
   correctionNote String?
   status         DiscrepancyStatus @default(OPEN)
   createdAt      DateTime          @default(now())
+
+  @@index([shipmentId])
 }
 
 enum Severity {
