@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { readFile } from 'fs/promises'
 import path from 'path'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { extractFromText, extractFromImages } from '@/lib/extractor'
 import { runRuleEngine } from '@/lib/rule-engine'
@@ -60,7 +61,7 @@ export async function POST(
             where: { id: doc.id },
             data: {
               status: 'DONE',
-              extractedData: extractResult.data ?? {},
+              extractedData: (extractResult.data ?? {}) as Prisma.InputJsonValue,
               confidenceScore: extractResult.data ? 0.9 : 0.1,
             },
           })
@@ -76,7 +77,8 @@ export async function POST(
     const extractedMap: Partial<ExtractedDocuments> = {}
     for (const result of results) {
       if (result.status === 'fulfilled' && result.value) {
-        extractedMap[result.value.docType as keyof ExtractedDocuments] = result.value.data as ExtractedDocuments[keyof ExtractedDocuments]
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(extractedMap as any)[result.value.docType] = result.value.data
       }
     }
 

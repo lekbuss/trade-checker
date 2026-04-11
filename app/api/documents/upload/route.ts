@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import type { DocType, FileType } from '@prisma/client'
 
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const document = await prisma.document.upsert({
       where: { shipmentId_docType: { shipmentId, docType } },
-      update: { filePath: `uploads/${shipmentId}/${filename}`, fileType, status: 'PENDING', extractedData: null },
+      update: { filePath: `uploads/${shipmentId}/${filename}`, fileType, status: 'PENDING', extractedData: Prisma.JsonNull },
       create: { shipmentId, docType, fileType, filePath: `uploads/${shipmentId}/${filename}` },
     })
 
