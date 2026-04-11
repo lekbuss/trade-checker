@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Shipment {
+  id            String         @id @default(cuid())
+  name          String
+  status        ShipmentStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  documents     Document[]
+  discrepancies Discrepancy[]
+}
+
+enum ShipmentStatus {
+  PENDING
+  PROCESSING
+  DONE
+  ERROR
+}
+
+model Document {
+  id              String    @id @default(cuid())
+  shipmentId      String
+  shipment        Shipment  @relation(fields: [shipmentId], references: [id])
+  docType         DocType
+  fileType        FileType
+  filePath        String
+  status          DocStatus @default(PENDING)
+  extractedData   Json?
+  confidenceScore Float?
+  createdAt       DateTime  @default(now())
+
+  @@unique([shipmentId, docType])
+}
+
+enum DocType {
+  INVOICE
+  PACKING_LIST
+  BL
+  ORIGIN_CERT
+}
+
+enum FileType {
+  PDF_TEXT
+  PDF_SCAN
+  EXCEL
+  EMAIL
+}
+
+enum DocStatus {
+  PENDING
+  PROCESSING
+  DONE
+  ERROR
+}
+
+model Discrepancy {
+  id             String            @id @default(cuid())
+  shipmentId     String
+  shipment       Shipment          @relation(fields: [shipmentId], references: [id])
+  fieldName      String
+  docA           DocType
+  docB           DocType
+  valueA         String
+  valueB         String
+  severity       Severity
+  correctionNote String?
+  status         DiscrepancyStatus @default(OPEN)
+  createdAt      DateTime          @default(now())
+}
+
+enum Severity {
+  FATAL
+  MINOR
+}
+
+enum DiscrepancyStatus {
+  OPEN
+  RESOLVED
+}
+
+model ToleranceRule {
+  id        String   @id @default(cuid())
+  fieldName String   @unique
+  ruleType  String
+  ruleValue Json
+  createdAt DateTime @default(now())
+}
