@@ -28,13 +28,13 @@ def extract_images(file_bytes: bytes) -> dict:
 
 
 def detect_and_extract(file_bytes: bytes) -> dict:
-    """テキスト層があれば extract_text、なければ extract_images を実行"""
+    """テキスト層があれば抽出、なければ画像変換する（PDF を1回だけ開く）"""
     text = ""
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
         for page in pdf.pages:
             t = page.extract_text()
             if t:
-                text += t
+                text += t + "\n"
     if len(text.strip()) >= 50:
-        return extract_text(file_bytes)
+        return {"success": True, "text": text.strip(), "images": []}
     return extract_images(file_bytes)
