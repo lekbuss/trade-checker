@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
-import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { detectDocType } from '@/lib/extractor'
 import type { DocType, FileType } from '@prisma/client'
@@ -60,21 +59,20 @@ export async function POST(request: NextRequest) {
       docType = await detectDocType(preprocessed.text ?? '', preprocessed.images ?? []) as DocType
     }
 
-    // Save file to disk
+    // Save file to disk with unique filename to support multiple files of the same type
     const uploadsRoot = path.resolve(process.cwd(), 'uploads')
     const uploadsDir = path.resolve(uploadsRoot, shipmentId)
     if (!uploadsDir.startsWith(uploadsRoot + path.sep) && uploadsDir !== uploadsRoot) {
       return NextResponse.json({ error: 'Invalid shipmentId' }, { status: 400 })
     }
     await mkdir(uploadsDir, { recursive: true })
-    const filename = `${docType}${ext}`
+    const uniqueId = Date.now().toString(36)
+    const filename = `${docType}_${uniqueId}${ext}`
     const filePath = path.join(uploadsDir, filename)
     await writeFile(filePath, Buffer.from(bytes))
 
-    const document = await prisma.document.upsert({
-      where: { shipmentId_docType: { shipmentId, docType } },
-      update: { filePath: `uploads/${shipmentId}/${filename}`, fileType, status: 'PENDING', extractedData: Prisma.JsonNull },
-      create: { shipmentId, docType, fileType, filePath: `uploads/${shipmentId}/${filename}` },
+    const document = await prisma.document.create({
+      data: { shipmentId, docType, fileType, filePath: `uploads/${shipmentId}/${filename}` },
     })
 
     return NextResponse.json({ ...document, detectedType: docType }, { status: 201 })

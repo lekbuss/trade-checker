@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { generateMarkdownReport, generateHtmlReport } from '@/lib/report-generator'
 
 export async function GET(
   request: NextRequest,
@@ -12,7 +13,7 @@ export async function GET(
     const shipment = await prisma.shipment.findUnique({
       where: { id: shipmentId },
       include: {
-        documents: true,
+        documents: { orderBy: { createdAt: 'asc' } },
         discrepancies: { orderBy: [{ severity: 'asc' }, { createdAt: 'asc' }] },
       },
     })
@@ -21,7 +22,7 @@ export async function GET(
     }
 
     if (format === 'csv') {
-      const headers = ['fieldName', 'docA', 'docB', 'valueA', 'valueB', 'severity', 'status', 'correctionNote']
+      const headers = ['groupKey', 'fieldName', 'docA', 'docB', 'valueA', 'valueB', 'severity', 'status', 'correctionNote']
       const rows = shipment.discrepancies.map(d =>
         headers.map(h => {
           const val = (d as Record<string, unknown>)[h]
@@ -33,7 +34,26 @@ export async function GET(
       return new NextResponse(csv, {
         headers: {
           'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="shipment-${shipmentId}.csv"`,
+          'Content-Disposition': `attachment; filename="report-${shipmentId}.csv"`,
+        },
+      })
+    }
+
+    if (format === 'markdown') {
+      const md = generateMarkdownReport(shipment)
+      return new NextResponse(md, {
+        headers: {
+          'Content-Type': 'text/markdown; charset=utf-8',
+          'Content-Disposition': `attachment; filename="report-${shipmentId}.md"`,
+        },
+      })
+    }
+
+    if (format === 'pdf') {
+      const html = generateHtmlReport(shipment)
+      return new NextResponse(html, {
+        headers: {
+          'Content-Type': 'text/html; charset=utf-8',
         },
       })
     }

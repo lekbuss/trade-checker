@@ -19,9 +19,14 @@ export default function ExportPage() {
       .catch(console.error)
   }, [])
 
-  const download = (format: 'json' | 'csv') => {
+  const download = (format: 'json' | 'csv' | 'markdown') => {
     if (!selectedId) return
     window.location.href = `/api/export/${selectedId}?format=${format}`
+  }
+
+  const openPdf = () => {
+    if (!selectedId) return
+    window.open(`/api/export/${selectedId}?format=pdf`, '_blank')
   }
 
   return (
@@ -47,6 +52,12 @@ export default function ExportPage() {
           </div>
 
           <div className="flex gap-3 flex-wrap">
+            <Button variant="outline" disabled={!selectedId} onClick={() => download('markdown')}>
+              Markdown ダウンロード
+            </Button>
+            <Button disabled={!selectedId} onClick={openPdf}>
+              PDF レポートを開く
+            </Button>
             <Button variant="outline" disabled={!selectedId} onClick={() => download('json')}>
               JSON ダウンロード
             </Button>
