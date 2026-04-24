@@ -93,6 +93,63 @@ export async function extractFromText(
   return { data, rawResponse }
 }
 
+// ─── 文書種別自動検出 ──────────────────────────────────────────────────
+
+const VALID_DOC_TYPES = ['INVOICE', 'PACKING_LIST', 'BL', 'ORIGIN_CERT'] as const
+export type DetectableDocType = typeof VALID_DOC_TYPES[number]
+
+const DETECT_PROMPT = `あなたは貿易文書の分類専門家です。提供された文書を読み、以下の4種類のうちどれに該当するかを判定してください。
+
+種類の定義：
+- INVOICE: 商業インボイス（請求書）。商品の価格・数量・合計金額・インコタームズ等が記載。
+- PACKING_LIST: 梱包明細書。重量・体積・梱包数・カートン数等が記載。
+- BL: 船荷証券（Bill of Lading）。船名・航次・積港・揚港・荷送人・荷受人等が記載。
+- ORIGIN_CERT: 原産地証明書（Certificate of Origin）。原産国・HSコード・発給機関等が記載。
+
+必ずJSONのみで返答してください（例）：{"docType": "INVOICE"}`
+
+export async function detectDocType(
+  text: string,
+  images: string[]
+): Promise<DetectableDocType> {
+  type ImageBlock = { type: 'image'; source: { type: 'base64'; media_type: 'image/jpeg'; data: string } }
+  type TextBlock = { type: 'text'; text: string }
+  let content: Array<ImageBlock | TextBlock>
+
+  if (images.length > 0) {
+    content = [
+      ...images.slice(0, 2).map(b64 => ({
+        type: 'image' as const,
+        source: { type: 'base64' as const, media_type: 'image/jpeg' as const, data: b64 },
+      })),
+      { type: 'text' as const, text: DETECT_PROMPT },
+    ]
+  } else {
+    content = [
+      { type: 'text' as const, text: DETECT_PROMPT },
+      { type: 'text' as const, text: `\n\n---\n\n${text.slice(0, 3000)}` },
+    ]
+  }
+
+  const response = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 64,
+    messages: [{ role: 'user', content }],
+  })
+
+  const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
+  const cleaned = rawText.replace(/^```(?:json)?\n?/m, '').replace(/\n?```$/m, '').trim()
+
+  try {
+    const parsed = JSON.parse(cleaned) as { docType: string }
+    if ((VALID_DOC_TYPES as readonly string[]).includes(parsed.docType)) {
+      return parsed.docType as DetectableDocType
+    }
+  } catch { /* ignore */ }
+
+  return 'INVOICE'
+}
+
 export async function extractFromImages(
   docType: string,
   base64Images: string[]

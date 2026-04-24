@@ -30,6 +30,8 @@ export default async function ShipmentDetailPage({
   })
   if (!shipment) notFound()
 
+  const uploadedDocs = shipment.documents.filter(d => d.status !== 'ERROR' || d.extractedData)
+
   return (
     <div className="space-y-8">
       <div className="flex items-center gap-3">
@@ -37,37 +39,43 @@ export default async function ShipmentDetailPage({
         <StatusBadge status={shipment.status} />
       </div>
 
+      {/* アップロードサマリー */}
+      <section className="bg-gray-50 rounded-lg px-4 py-3 border text-sm text-gray-700">
+        <span className="font-medium">アップロード済み書類：{shipment.documents.length}件</span>
+        {shipment.documents.length > 0 && (
+          <span className="ml-2 text-gray-500">
+            ({shipment.documents.map(d => DOC_TYPE_LABELS[d.docType]).join('、')})
+          </span>
+        )}
+      </section>
+
       <section>
-        <h2 className="text-lg font-semibold mb-3">アップロード書類</h2>
+        <h2 className="text-lg font-semibold mb-3">書類詳細</h2>
         <div className="grid grid-cols-2 gap-4">
-          {(['INVOICE', 'PACKING_LIST', 'BL', 'ORIGIN_CERT'] as DocType[]).map((docType) => {
-            const doc = shipment.documents.find(d => d.docType === docType)
-            return (
-              <Card key={docType}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex justify-between items-center">
-                    {DOC_TYPE_LABELS[docType]}
-                    {doc && <StatusBadge status={doc.status} />}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {doc ? (
-                    <div className="space-y-2">
-                      <p className="text-xs text-gray-500">{doc.fileType}</p>
-                      {doc.extractedData && (
-                        <ExtractedJsonDialog
-                          docType={DOC_TYPE_LABELS[docType]}
-                          data={doc.extractedData}
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-gray-400">未アップロード</p>
+          {shipment.documents.map((doc) => (
+            <Card key={doc.id}>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex justify-between items-center">
+                  {DOC_TYPE_LABELS[doc.docType]}
+                  <StatusBadge status={doc.status} />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-500">{doc.fileType}</p>
+                  {doc.extractedData && (
+                    <ExtractedJsonDialog
+                      docType={DOC_TYPE_LABELS[doc.docType]}
+                      data={doc.extractedData}
+                    />
                   )}
-                </CardContent>
-              </Card>
-            )
-          })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+          {uploadedDocs.length === 0 && (
+            <p className="text-xs text-gray-400 col-span-2">書類がありません</p>
+          )}
         </div>
       </section>
 
